@@ -68,3 +68,6 @@ lerna-debug.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+# Playwright MCP scratch output
+.playwright-mcp/
