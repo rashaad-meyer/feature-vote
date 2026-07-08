@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -112,3 +113,42 @@ class VoteTests(APITestCase):
         self.client.credentials()
         response = self.client.post(reverse('api:idea-vote', args=[self.idea.pk]))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class OrderingTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='grace', password='sup3rs3cret!')
+        # Created oldest-first; low_votes is newest.
+        self.high_votes = Idea.objects.create(
+            title='Popular', vote_count=50, created_by=self.user
+        )
+        self.low_votes = Idea.objects.create(
+            title='Fresh', vote_count=1, created_by=self.user
+        )
+
+    def _titles(self, ordering):
+        response = self.client.get(reverse('api:idea-list'), {'ordering': ordering})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return [row['title'] for row in response.data['results']]
+
+    def test_default_ordering_is_by_votes(self):
+        response = self.client.get(reverse('api:idea-list'))
+        titles = [row['title'] for row in response.data['results']]
+        self.assertEqual(titles, ['Popular', 'Fresh'])
+
+    def test_order_by_newest(self):
+        self.assertEqual(self._titles('-created_at'), ['Fresh', 'Popular'])
+
+    def test_order_by_votes(self):
+        self.assertEqual(self._titles('-vote_count'), ['Popular', 'Fresh'])
+
+
+class SeedCommandTests(APITestCase):
+    def test_seed_demo_is_idempotent(self):
+        call_command('seed_demo')
+        call_command('seed_demo')
+        self.assertEqual(User.objects.filter(username='demo').count(), 1)
+        self.assertEqual(Idea.objects.count(), 8)
+        self.assertTrue(
+            self.client.login(username='demo', password='demo12345')
+        )

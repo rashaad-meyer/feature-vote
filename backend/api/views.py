@@ -3,6 +3,7 @@ from django.db import transaction
 from django.db.models import F
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from .models import Idea, Vote
@@ -18,6 +19,9 @@ class IdeaViewSet(viewsets.ModelViewSet):
     queryset = Idea.objects.all()
     serializer_class = IdeaSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['vote_count', 'created_at']
+    ordering = ['-vote_count', '-created_at']
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
