@@ -69,20 +69,8 @@ cd backend
 uv run python manage.py test api
 ```
 
-**Frontend unit / integration** (Vitest):
-
-```bash
-cd frontend
-npm test
-```
-
-**Frontend end-to-end** (Playwright — boots both servers automatically):
-
-```bash
-cd frontend
-npx playwright install chromium      # first run only
-npm run e2e
-```
+This runs the focused test verifying the single-vote-per-user rule
+(`test_cannot_vote_twice`).
 
 ---
 
@@ -125,7 +113,7 @@ curl -X POST http://localhost:8000/api/ideas/1/vote/ \
 ```
 feature-vote/
 ├── backend/                 # Django project (uv-managed)
-│   ├── api/                 # models, serializers, views, urls, tests
+│   ├── api/                 # models, serializers, views, urls, tests.py
 │   │   └── management/commands/seed_demo.py
 │   └── config/              # settings, root urls
 ├── frontend/                # Vite + React + TypeScript SPA

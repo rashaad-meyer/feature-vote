@@ -31,8 +31,6 @@ with `VITE_API_URL`.
 | `npm run dev`   | Start the dev server                              |
 | `npm run build` | Type-check and build for production               |
 | `npm run lint`  | Lint with oxlint                                  |
-| `npm test`      | Unit/integration tests (Vitest)                   |
-| `npm run e2e`   | End-to-end tests (Playwright; boots both servers) |
 
 ## Structure
 

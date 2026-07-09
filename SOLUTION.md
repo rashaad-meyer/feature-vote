@@ -11,8 +11,8 @@ ports (`8000` and `5173`), which is the fastest local setup and keeps the two
 codebases independently testable and deployable.
 
 I chose **completeness over breadth**, as the brief asks: every listed
-requirement is implemented end-to-end and covered by a test, plus two of the
-optional bonuses (pagination and optimistic voting).
+requirement is implemented end-to-end, plus two of the optional bonuses
+(pagination and optimistic voting).
 
 ## Backend
 
@@ -112,13 +112,13 @@ addressable resource — this keeps the client simple (no need to track vote IDs
 `useVote` implements the snapshot → apply → reconcile pattern:
 
 1. `onMutate` cancels in-flight idea queries, **snapshots** the cache, and
-   flips `has_voted` + `vote_count` immediately via a pure, unit-tested
-   `applyVoteToggle` helper.
+   flips `has_voted` + `vote_count` immediately via a pure `applyVoteToggle`
+   helper.
 2. `onError` **rolls back** to the snapshot and shows a toast.
 3. `onSettled` invalidates the idea queries to **reconcile** with server truth.
 
-Keeping the mutation logic in the pure helper means the trickiest part (the
-count math) is tested without a DOM or network.
+Keeping the mutation logic in a pure helper isolates the trickiest part (the
+count math) from the DOM and network.
 
 - **Trade-off:** on the "most votes" sort, an optimistic vote doesn't re-order
   the list until the settle-time refetch. I chose visual stability (rows don't
@@ -139,22 +139,18 @@ boundary controls.
 
 ## Testing
 
-- **Backend (17 tests):** registration, login, idea CRUD + ownership, sorting,
-  seeding, and the vote lifecycle. The single-vote-per-user rule has a dedicated
-  focused test (`test_cannot_vote_twice`).
-- **Frontend (17 tests, Vitest):** the API client (token, error parsing, network
-  failure), the pure optimistic reducer, and the `useVote` hook's optimistic +
-  rollback behaviour.
-- **E2E (4 tests, Playwright):** public list, anonymous gating, optimistic
-  vote+toggle, and create+sort — booting the full stack.
+Per the brief's "exactly one focused test" instruction, the suite is a single
+backend test — `VoteTests.test_cannot_vote_twice` — that verifies the
+single-vote-per-user rule: a second vote from the same user returns `400` and
+the count stays at `1`.
 
-> **Note on "exactly one test":** the brief asks for exactly one focused test for
-> the single-vote rule. That test exists and is clearly named; the additional
-> tests are supplementary coverage, not a substitute for it.
+```bash
+cd backend && uv run python manage.py test api
+```
 
-The multi-user behaviour (two different users voting on the same idea aggregate
-the count; each is limited to one vote) was also verified manually end-to-end
-through the browser.
+All other behaviour (idea CRUD + ownership, sorting, the multi-user vote
+aggregate, and the optimistic vote/rollback UX) was verified manually
+end-to-end through the browser.
 
 ## What I'd do next with more time
 
@@ -163,4 +159,4 @@ through the browser.
   reduce XSS exposure — a deliberate simplification here.
 - Idea status workflow (planned / in-progress / shipped) and search.
 - A reconciliation command for `vote_count` as a safety net.
-- CI running all three test suites on push.
+- Broader automated coverage (frontend unit + E2E) and CI on push.
